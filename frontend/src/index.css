@@ -1,0 +1,119 @@
+:root {
+    --bg: #101418;
+    --panel: #1b232b;
+    --accent: #4db6ff;
+    --danger: #ff5555;
+    --text: #e6edf3;
+    --muted: #9aa4af;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen;
+  }
+  
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+  }
+  
+  a { color: var(--accent); }
+  
+  input, button, select, textarea {
+    font: inherit;
+  }
+  
+  button {
+    cursor: pointer;
+  }
+  
+  .panel {
+    background: var(--panel);
+    border: 1px solid #2a3540;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .flex {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .grid {
+    display: grid;
+    gap: 16px;
+  }
+  
+  h1, h2, h3 {
+    margin-top: 0;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .table th, .table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #2a3540;
+    font-size: 14px;
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 11px;
+    border-radius: 4px;
+    background: #2a3540;
+    color: var(--muted);
+  }
+  
+  .status-SUCCESS { color: #4caf50; }
+  .status-FAILURE { color: var(--danger); }
+  .status-RUNNING { color: #ffc107; }
+  .status-QUEUED { color: #888; }
+  
+  input[type=file] {
+    color: var(--text);
+  }
+  
+  input:not([type=file]), .btn, select {
+    background: #202b34;
+    border: 1px solid #2f3d49;
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+  
+  input:focus, select:focus {
+    outline: 2px solid var(--accent);
+  }
+  
+  .btn {
+    background: var(--accent);
+    color: #002b40;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  
+  .btn:hover {
+    background: #6ccfff;
+  }
+  
+  .btn-secondary {
+    background: #2a3540;
+    color: var(--text);
+  }
+  
+  .btn-danger {
+    background: var(--danger);
+    color: #360b0b;
+  }
+  
+  .stl-viewer-container {
+    width: 100%;
+    height: 400px;
+    background: #0d1216;
+    border: 1px solid #2a3540;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }

@@ -1,0 +1,45 @@
+# Node modules and build artifacts
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log
+yarn-error.log
+
+# Python cache, virtualenv and output
+__pycache__/
+*.py[cod]
+*.egg-info/
+python/.venv/
+python/venv/
+python/.mypy_cache/
+python/.pytest_cache/
+python/.coverage
+python/.cache/
+
+# Model/data/outputs
+data/
+models/
+hf_cache/
+*.h5
+*.pt
+*.pth
+
+# Uploads
+uploads/
+*.stl
+
+# OS and IDE/files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment and secrets
+.env
+*.env
+node/.env
+frontend/.env
+python/.env
+
+# Docker
+**/.docker*
