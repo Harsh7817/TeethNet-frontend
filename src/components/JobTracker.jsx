@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { getStatus } from '../api.js';
+import { getStatus, API_BASE } from '../api.js';
 import STLViewer from './STLViewer.jsx';
 
 export default function JobTracker({ jobId, onComplete }) {
@@ -126,9 +126,9 @@ export default function JobTracker({ jobId, onComplete }) {
                     stageStatus === 'error' ? 'var(--error)' :
                       'rgba(255, 255, 255, 0.05)',
                 border: `2px solid ${stageStatus === 'complete' ? 'var(--success)' :
-                    stageStatus === 'active' ? 'var(--primary)' :
-                      stageStatus === 'error' ? 'var(--error)' :
-                        'var(--glass-border)'
+                  stageStatus === 'active' ? 'var(--primary)' :
+                    stageStatus === 'error' ? 'var(--error)' :
+                      'var(--glass-border)'
                   }`,
                 position: 'relative',
                 flexShrink: 0,
@@ -213,7 +213,7 @@ export default function JobTracker({ jobId, onComplete }) {
 
           <a
             className="btn"
-            href={`http://localhost:3000/download/${jobId}`}
+            href={`${API_BASE}/download/${jobId}`}
             download={`${jobId}.stl`}
             style={{
               width: '100%',
@@ -233,7 +233,7 @@ export default function JobTracker({ jobId, onComplete }) {
             <h4 style={{ marginBottom: 'var(--space-md)', fontSize: '1.125rem' }}>
               3D Preview
             </h4>
-            <STLViewer stlUrl={`http://localhost:3000/download/${jobId}`} />
+            <STLViewer stlUrl={`${API_BASE}/download/${jobId}`} />
           </div>
         </div>
       )}
