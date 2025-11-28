@@ -43,3 +43,5 @@ python/.env
 
 # Docker
 **/.docker*
+#Project Analysis
+PROJECT_ANALYSIS.md
