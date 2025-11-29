@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { checkHealth } from './api';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import AuthPanel from './components/AuthPanel.jsx';
@@ -9,6 +10,11 @@ export default function App() {
   const [authed, setAuthed] = useState(!!localStorage.getItem('token'));
   const [currentJobId, setCurrentJobId] = useState(null);
   const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    // Warm up backend on load
+    checkHealth().then(s => console.log('Backend warmup:', s));
+  }, []);
 
   function handleAuthChange(isAuthed, email = '') {
     setAuthed(isAuthed);
