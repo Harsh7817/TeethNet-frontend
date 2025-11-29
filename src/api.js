@@ -47,3 +47,13 @@ export async function streamFile(fileId) {
 export function logout() {
   localStorage.removeItem('token');
 }
+
+export async function checkHealth() {
+  try {
+    const { data } = await api.get('/health');
+    return data;
+  } catch (e) {
+    console.warn('Health check failed:', e);
+    return { status: 'error' };
+  }
+}

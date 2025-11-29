@@ -57,7 +57,11 @@ export default function UploadForm({ onJobCreated }) {
       setFile(null);
       setPreview(null);
     } catch (e) {
-      setError(e.response?.data?.error || e.message);
+      let msg = e.response?.data?.error || e.message;
+      if (e.response?.status === 500) {
+        msg += ' (Server might be waking up, please try again in a moment)';
+      }
+      setError(msg);
     } finally {
       setBusy(false);
     }
