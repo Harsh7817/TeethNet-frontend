@@ -70,7 +70,7 @@ export default function STLViewer({ stlUrl }) {
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
     controls.minDistance = 20;
-    controls.maxDistance = 500;
+    controls.maxDistance = 1500;
     controls.maxPolarAngle = Math.PI / 2;
 
     // Load STL
