@@ -1,4 +1,4 @@
-import React from 'react';
+import logo from '../assets/logo.jpeg';
 
 export default function Header({ user, onLogout }) {
   return (
@@ -19,13 +19,24 @@ export default function Header({ user, onLogout }) {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
           <div style={{
-            fontSize: '2rem',
-            background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 800
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '50%',
+            padding: '4px',
+            border: '1px solid var(--glass-border)'
           }}>
-            🦷
+            <img
+              src={logo}
+              alt="Scannix Logo"
+              style={{
+                height: '40px',
+                width: '40px',
+                objectFit: 'cover',
+                borderRadius: '50%'
+              }}
+            />
           </div>
           <div>
             <h2 style={{
