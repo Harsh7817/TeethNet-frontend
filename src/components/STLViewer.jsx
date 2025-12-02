@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 
 export default function STLViewer({ stlUrl }) {
   const mountRef = useRef(null);
@@ -11,6 +11,7 @@ export default function STLViewer({ stlUrl }) {
   const [wireframe, setWireframe] = useState(false);
   const meshRef = useRef(null);
   const rendererRef = useRef(null);
+  const resetViewRef = useRef(null);
 
   useEffect(() => {
     if (!stlUrl) return;
@@ -65,13 +66,25 @@ export default function STLViewer({ stlUrl }) {
     scene.add(gridHelper);
 
     // Controls
-    let controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.screenSpacePanning = false;
+    let controls = new TrackballControls(camera, renderer.domElement);
+    controls.rotateSpeed = 5.0;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
+    controls.noZoom = false;
+    controls.noPan = false;
+    controls.staticMoving = false; // Enable damping
+    controls.dynamicDampingFactor = 0.1;
     controls.minDistance = 20;
     controls.maxDistance = 1500;
-    controls.maxPolarAngle = Math.PI / 2;
+
+    // Reset View Function
+    const resetView = () => {
+      controls.reset();
+      camera.position.set(0, 0, 220);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    };
+    resetViewRef.current = resetView;
 
     // Load STL
     const loader = new STLLoader();
@@ -82,7 +95,7 @@ export default function STLViewer({ stlUrl }) {
         geometry.computeVertexNormals();
 
         const material = new THREE.MeshPhongMaterial({
-          color: 0x4db6ff,
+          color: 0x89CFF0, // Lighter shade of blue (Baby Blue)
           specular: 0x111111,
           shininess: 80,
           wireframe: false
@@ -126,6 +139,8 @@ export default function STLViewer({ stlUrl }) {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
+      // TrackballControls handles resize via its own update if needed, but usually just camera aspect is enough
+      controls.handleResize();
     }
     window.addEventListener('resize', handleResize);
 
@@ -185,6 +200,13 @@ export default function STLViewer({ stlUrl }) {
               title={wireframe ? 'Solid View' : 'Wireframe View'}
             >
               {wireframe ? '🔲' : '⬛'}
+            </button>
+            <button
+              onClick={() => resetViewRef.current?.()}
+              title="Reset View"
+              style={{ marginLeft: 'var(--space-sm)' }}
+            >
+              🔄
             </button>
           </div>
         )}
