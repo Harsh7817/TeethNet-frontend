@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeethNet: Deep Dive Project Analysis</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #475569;
+            --accent: #0ea5e9;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            color: var(--text);
+            font-weight: 700;
+            margin-top: 2.5rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 1rem;
+            margin-bottom: 3rem;
+            color: var(--primary);
+        }
+
+        h2 {
+            font-size: 2rem;
+            border-left: 5px solid var(--accent);
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .section {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+        }
+
+        .diagram-container {
+            background: white;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 2rem 0;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border);
+            padding: 1rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: #db2777;
+        }
+
+        .note {
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>TeethNet: Technical Architecture & Analysis</h1>
+    <p class="note"><strong>System Version:</strong> 1.0 | <strong>Date:</strong> 2025-11-30</p>
+
+    <div class="section">
+        <h2>1. Executive Summary & Purpose</h2>
+        <p><strong>TeethNet</strong> (Scannix) is an advanced medical imaging platform designed to bridge the gap
+            between 2D dental photography and 3D diagnostic modeling. </p>
+        <p>The core problem it solves is the high cost and hardware dependency of traditional 3D intraoral scanning. By
+            leveraging the <strong>Depth Anything</strong> transformer model, TeethNet allows practitioners to upload
+            standard 2D RGB images and receive high-fidelity 3D STL models within seconds. This "software-defined
+            scanning" approach democratizes access to 3D visualization for patient education, preliminary orthodontics,
+            and remote diagnostics.</p>
+    </div>
+
+    <div class="section">
+        <h2>2. High-Level System Architecture</h2>
+        <p>The system utilizes a <strong>Microservices Architecture</strong> orchestrated via Docker Compose. This
+            design ensures separation of concerns, scalability, and fault tolerance. The heavy AI processing is
+            decoupled from the user-facing API to ensure the application remains responsive even under load.</p>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+                graph TD
+                subgraph Client_Layer [Client Layer]
+                Browser[User Browser / React App]
+                end
+
+                subgraph Application_Layer [Application Layer]
+                NodeAPI[Node.js API Gateway]
+                PyAPI[Python FastAPI Service]
+                end
+
+                subgraph Data_Layer [Data Persistence Layer]
+                Mongo[(MongoDB Atlas)]
+                GridFS[(GridFS Object Storage)]
+                Redis[(Redis Cache & Broker)]
+                end
+
+                subgraph Compute_Layer [AI Compute Layer]
+                Worker[Python Celery Worker]
+                GPU[GPU Acceleration]
+                end
+
+                Browser -->|HTTP/REST| NodeAPI
+                NodeAPI -->|Auth & Metadata| Mongo
+                NodeAPI -->|File Storage| GridFS
+                NodeAPI -->|Proxy Upload| PyAPI
+
+                PyAPI -->|Enqueue Job| Redis
+                Redis -->|Consume Task| Worker
+                Worker -->|Inference| GPU
+                Worker -->|Save Result| PyAPI
+
+                PyAPI -.->|Shared Volume| Worker
+            </div>
+        </div>
+
+        <h3>Architectural Decisions:</h3>
+        <ul>
+            <li><strong>Node.js as Gateway:</strong> Handles lightweight tasks like Auth, Validation, and DB
+                interactions efficiently. It acts as the primary entry point, shielding the Python services.</li>
+            <li><strong>Async Worker Pattern:</strong> 3D reconstruction is computationally expensive (10-30s). We use
+                Celery + Redis to handle this asynchronously so the HTTP request doesn't time out.</li>
+            <li><strong>Shared Volumes:</strong> The Python API and Worker share a Docker volume for zero-copy file
+                access, avoiding the overhead of sending large image data over the network between local containers.
+            </li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>3. Detailed Service Breakdown</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Service Component</th>
+                    <th>Technology</th>
+                    <th>Key Responsibilities</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Frontend Client</strong></td>
+                    <td>React + Vite + Three.js</td>
+                    <td>Provides the interactive dashboard. Uses <strong>Three.js</strong> to render the generated STL
+                        models directly in the browser. Manages state via React Hooks.</td>
+                </tr>
+                <tr>
+                    <td><strong>Backend API (Orchestrator)</strong></td>
+                    <td>Node.js + Express</td>
+                    <td>
+                        <ul>
+                            <li><strong>Authentication:</strong> JWT-based stateless auth.</li>
+                            <li><strong>Data Management:</strong> Stores user profiles and job history in MongoDB.</li>
+                            <li><strong>File Handling:</strong> Streams large binaries to/from GridFS.</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>AI Gateway</strong></td>
+                    <td>Python FastAPI</td>
+                    <td>Internal service that accepts image uploads from the Node backend and pushes them to the
+                        processing queue. Exposes endpoints for job status checking.</td>
+                </tr>
+                <tr>
+                    <td><strong>Task Queue</strong></td>
+                    <td>Redis</td>
+                    <td>In-memory data structure store used as a message broker for Celery and a temporary cache for job
+                        status updates.</td>
+                </tr>
+                <tr>
+                    <td><strong>AI Worker</strong></td>
+                    <td>Celery + PyTorch</td>
+                    <td>The "Brain" of the system. Loads the <code>Depth Anything</code> model, processes images,
+                        generates point clouds, and performs Poisson reconstruction.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>4. User Authentication & Security Flow</h2>
+        <p>Security is paramount for medical data. The system implements a robust JWT-based authentication flow.</p>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User
+                participant C as Client (React)
+                participant N as Node API
+                participant D as MongoDB
+
+                Note over U, D: Registration Phase
+                U->>C: Enter Email/Password
+                C->>N: POST /auth/signup
+                N->>N: Hash Password (bcrypt)
+                N->>D: Create User Document
+                D-->>N: Success
+                N-->>C: Return JWT Token
+                C->>C: Store Token (localStorage)
+
+                Note over U, D: Protected Resource Access
+                U->>C: Click "Upload"
+                C->>N: POST /submit (Header: Bearer Token)
+                N->>N: Verify JWT Signature
+                alt Invalid Token
+                N-->>C: 401 Unauthorized
+                else Valid Token
+                N->>N: Extract User ID
+                N->>D: Process Request
+                N-->>C: 200 OK
+                end
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>5. The 3D Reconstruction Pipeline</h2>
+        <p>This is the core technical differentiator. The pipeline converts a 2D pixel grid into a 3D mesh topology.</p>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+                flowchart TD
+                Start([Input 2D Image]) --> Preprocess[Preprocessing: Resize & Normalize]
+                Preprocess --> DepthAI[AI Inference: Depth Anything Model]
+                DepthAI --> DepthMap[Raw Depth Map]
+
+                DepthMap --> PointCloud[Generate Orthographic Point Cloud]
+                PointCloud --> Outlier[Statistical Outlier Removal]
+
+                Outlier --> Normals[Normal Estimation & Orientation]
+                Normals --> Poisson[Poisson Surface Reconstruction]
+
+                Poisson --> Mesh[Raw 3D Mesh]
+                Mesh --> Cleanup[Mesh Cleanup & Trimming]
+                Cleanup --> Export[Export to STL Binary]
+                Export --> End([Final 3D Model])
+
+                style DepthAI fill:#f9f,stroke:#333,stroke-width:2px
+                style Poisson fill:#bbf,stroke:#333,stroke-width:2px
+            </div>
+        </div>
+
+        <h3>Step-by-Step Technical Explanation:</h3>
+        <ol>
+            <li><strong>Depth Estimation:</strong> The image is fed into the <code>Depth Anything</code> transformer.
+                This model has been trained on millions of images to understand relative depth, outputting a tensor
+                where pixel intensity represents distance.</li>
+            <li><strong>Point Cloud Projection:</strong> We map the 2D pixels (x, y) and their predicted depth (z) into
+                3D space. This creates a "cloud" of points floating in space.</li>
+            <li><strong>Outlier Removal:</strong> AI predictions can be noisy. We use statistical analysis to find
+                points that are too far from their neighbors (floating artifacts) and delete them.</li>
+            <li><strong>Poisson Reconstruction:</strong> This is a mathematical algorithm that wraps a "skin" (surface)
+                around the point cloud. It solves a Poisson equation to create a watertight mesh from the oriented
+                points.</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>6. End-to-End Data Flow</h2>
+        <p>How data moves through the system from upload to result.</p>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+                sequenceDiagram
+                participant User
+                participant React
+                participant Node
+                participant PythonAPI
+                participant Redis
+                participant Worker
+
+                User->>React: Upload Image
+                React->>Node: POST /submit (Multipart)
+                Node->>Node: Save to GridFS (Backup)
+                Node->>PythonAPI: Forward File
+                PythonAPI->>Redis: Enqueue Job (ID: 123)
+                PythonAPI-->>Node: Return Job ID
+                Node-->>React: Job Started (ID: 123)
+
+                par Async Processing
+                Worker->>Redis: Pop Job
+                Worker->>Worker: Run 3D Pipeline (20s)
+                Worker->>Redis: Update Status: SUCCESS
+                and Polling
+                loop Every 2 Seconds
+                React->>Node: GET /status/123
+                Node->>PythonAPI: Check Status
+                PythonAPI->>Redis: Get State
+                Redis-->>React: RUNNING...
+                end
+                end
+
+                Redis-->>React: SUCCESS (Result Ready)
+                React->>Node: GET /download/123
+                Node->>PythonAPI: Stream STL
+                PythonAPI-->>React: File Download
+                React->>React: Render in 3D Viewer
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>7. Technology Stack & Rationale</h2>
+        <ul>
+            <li><strong>Frontend: React & Three.js</strong> - React provides a robust component structure, while
+                Three.js is the industry standard for WebGL. This combination allows for a "CAD-like" experience in the
+                browser.</li>
+            <li><strong>Backend: Node.js</strong> - Chosen for its non-blocking I/O, which is perfect for handling
+                multiple concurrent file uploads and proxying requests without stalling.</li>
+            <li><strong>AI Engine: Python</strong> - Python is the lingua franca of AI. We use <strong>FastAPI</strong>
+                for high performance and <strong>PyTorch</strong> for the model execution.</li>
+            <li><strong>Database: MongoDB</strong> - The flexible schema fits our evolving data model, and
+                <strong>GridFS</strong> provides a native way to store large image and STL files without needing a
+                separate S3 bucket for this scale.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>8. Future Extension Opportunities</h2>
+        <p>The current architecture is built for scalability. Key areas for expansion include:</p>
+        <ul>
+            <li><strong>Cloud Scaling:</strong> The Worker container can be deployed to AWS ECS/EKS with auto-scaling
+                rules based on the Redis queue length.</li>
+            <li><strong>Multi-View Stereo (MVS):</strong> Upgrading the pipeline to accept <em>multiple</em> images of
+                the same tooth from different angles to improve depth accuracy significantly.</li>
+            <li><strong>Mobile App:</strong> A React Native wrapper could allow dentists to take photos and upload them
+                directly from the chairside.</li>
+        </ul>
+    </div>
+
+</body>
+
+</html>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 
 export default function STLViewer({ stlUrl }) {
   const mountRef = useRef(null);
@@ -10,6 +11,7 @@ export default function STLViewer({ stlUrl }) {
   const [wireframe, setWireframe] = useState(false);
   const meshRef = useRef(null);
   const rendererRef = useRef(null);
+  const resetViewRef = useRef(null);
 
   useEffect(() => {
     if (!stlUrl) return;
@@ -63,6 +65,27 @@ export default function STLViewer({ stlUrl }) {
     gridHelper.position.y = -50;
     scene.add(gridHelper);
 
+    // Controls
+    let controls = new TrackballControls(camera, renderer.domElement);
+    controls.rotateSpeed = 5.0;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
+    controls.noZoom = false;
+    controls.noPan = false;
+    controls.staticMoving = false; // Enable damping
+    controls.dynamicDampingFactor = 0.1;
+    controls.minDistance = 20;
+    controls.maxDistance = 1500;
+
+    // Reset View Function
+    const resetView = () => {
+      controls.reset();
+      camera.position.set(0, 0, 220);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    };
+    resetViewRef.current = resetView;
+
     // Load STL
     const loader = new STLLoader();
     loader.load(
@@ -72,7 +95,7 @@ export default function STLViewer({ stlUrl }) {
         geometry.computeVertexNormals();
 
         const material = new THREE.MeshPhongMaterial({
-          color: 0x4db6ff,
+          color: 0x89CFF0, // Lighter shade of blue (Baby Blue)
           specular: 0x111111,
           shininess: 80,
           wireframe: false
@@ -90,38 +113,6 @@ export default function STLViewer({ stlUrl }) {
         mesh.position.sub(center);
 
         scene.add(mesh);
-
-        // Controls
-        let isDragging = false;
-        let prev = { x: 0, y: 0 };
-
-        const onMouseDown = (e) => {
-          isDragging = true;
-          prev = { x: e.clientX, y: e.clientY };
-        };
-
-        const onMouseUp = () => { isDragging = false; };
-
-        const onMouseMove = (e) => {
-          if (!isDragging) return;
-          const dx = e.clientX - prev.x;
-          const dy = e.clientY - prev.y;
-          prev = { x: e.clientX, y: e.clientY };
-          mesh.rotation.y += dx * 0.01;
-          mesh.rotation.x += dy * 0.01;
-        };
-
-        const onWheel = (e) => {
-          e.preventDefault();
-          const delta = e.deltaY * 0.5;
-          camera.position.z += delta;
-          camera.position.z = Math.max(20, Math.min(camera.position.z, 2000));
-        };
-
-        container.addEventListener('mousedown', onMouseDown);
-        window.addEventListener('mouseup', onMouseUp);
-        window.addEventListener('mousemove', onMouseMove);
-        container.addEventListener('wheel', onWheel);
       },
       undefined,
       (err) => {
@@ -135,6 +126,7 @@ export default function STLViewer({ stlUrl }) {
     let animationId;
     function animate() {
       animationId = requestAnimationFrame(animate);
+      if (controls) controls.update();
       renderer.render(scene, camera);
     }
     animate();
@@ -147,6 +139,8 @@ export default function STLViewer({ stlUrl }) {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
+      // TrackballControls handles resize via its own update if needed, but usually just camera aspect is enough
+      controls.handleResize();
     }
     window.addEventListener('resize', handleResize);
 
@@ -154,6 +148,7 @@ export default function STLViewer({ stlUrl }) {
     return () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationId);
+      if (controls) controls.dispose();
       if (container) container.innerHTML = '';
       renderer.dispose();
     };
@@ -205,6 +200,13 @@ export default function STLViewer({ stlUrl }) {
               title={wireframe ? 'Solid View' : 'Wireframe View'}
             >
               {wireframe ? '🔲' : '⬛'}
+            </button>
+            <button
+              onClick={() => resetViewRef.current?.()}
+              title="Reset View"
+              style={{ marginLeft: 'var(--space-sm)' }}
+            >
+              🔄
             </button>
           </div>
         )}

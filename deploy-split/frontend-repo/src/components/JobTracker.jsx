@@ -8,6 +8,8 @@ export default function JobTracker({ jobId, onComplete }) {
   const [resultPath, setResultPath] = useState('');
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  const [imageFileId, setImageFileId] = useState(null);
+  const [sourceFilename, setSourceFilename] = useState('');
   const timerRef = useRef();
 
   useEffect(() => {
@@ -21,6 +23,8 @@ export default function JobTracker({ jobId, onComplete }) {
         setStatus(data.state || data.status);
         setDetail(data.detail || '');
         setResultPath(data.result || '');
+        if (data.imageFileId) setImageFileId(data.imageFileId);
+        if (data.sourceFilename) setSourceFilename(data.sourceFilename);
 
         // Update progress based on status
         if (data.state === 'QUEUED') setProgress(25);
@@ -228,6 +232,27 @@ export default function JobTracker({ jobId, onComplete }) {
             <span>⬇️</span>
             <span>Download STL File</span>
           </a>
+
+          {imageFileId && (
+            <div style={{ marginBottom: 'var(--space-xl)' }}>
+              <h4 style={{ marginBottom: 'var(--space-md)', fontSize: '1.125rem' }}>
+                Original 2D Image
+              </h4>
+              <div style={{
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-md)',
+                display: 'flex',
+                justifyContent: 'center'
+              }}>
+                <img
+                  src={`${API_BASE}/files/${imageFileId}`}
+                  alt={sourceFilename || "Source"}
+                  style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: 'var(--radius-sm)' }}
+                />
+              </div>
+            </div>
+          )}
 
           <div>
             <h4 style={{ marginBottom: 'var(--space-md)', fontSize: '1.125rem' }}>
