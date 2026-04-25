@@ -129,10 +129,51 @@ export default function STLViewer({ stlUrl }) {
           camera.position.z = Math.max(20, Math.min(camera.position.z, 2000));
         };
 
+        let initialPinchDistance = null;
+        const onTouchStart = (e) => {
+          if (e.touches.length === 1) {
+            isDragging = true;
+            prev = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          } else if (e.touches.length === 2) {
+            isDragging = false;
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            initialPinchDistance = Math.hypot(dx, dy);
+          }
+        };
+
+        const onTouchEnd = () => {
+          isDragging = false;
+          initialPinchDistance = null;
+        };
+
+        const onTouchMove = (e) => {
+          if (e.touches.length === 1 && isDragging) {
+            const dx = e.touches[0].clientX - prev.x;
+            const dy = e.touches[0].clientY - prev.y;
+            prev = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            mesh.rotation.y += dx * 0.01;
+            mesh.rotation.x += dy * 0.01;
+          } else if (e.touches.length === 2 && initialPinchDistance) {
+            e.preventDefault(); // prevent scrolling when pinching
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const currentPinchDistance = Math.hypot(dx, dy);
+            const delta = (initialPinchDistance - currentPinchDistance) * 0.5;
+            camera.position.z += delta;
+            camera.position.z = Math.max(20, Math.min(camera.position.z, 2000));
+            initialPinchDistance = currentPinchDistance;
+          }
+        };
+
         container.addEventListener('mousedown', onMouseDown);
         window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('mousemove', onMouseMove);
-        container.addEventListener('wheel', onWheel);
+        container.addEventListener('wheel', onWheel, { passive: false });
+        
+        container.addEventListener('touchstart', onTouchStart, { passive: false });
+        window.addEventListener('touchend', onTouchEnd);
+        container.addEventListener('touchmove', onTouchMove, { passive: false });
       },
       undefined,
       (err) => {
