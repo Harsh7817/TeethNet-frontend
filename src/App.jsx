@@ -54,7 +54,7 @@ export default function App() {
               <div className="feature-icon">⚡</div>
               <h3 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-sm)' }}>Lightning Fast</h3>
               <p style={{ fontSize: '0.875rem', margin: 0 }}>
-                GPU-accelerated processing delivers results in 10-30 seconds
+                GPU-accelerated processing delivers results in 40-60 seconds
               </p>
             </div>
             <div className="feature-card">
