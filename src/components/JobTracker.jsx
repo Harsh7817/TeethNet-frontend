@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { getStatus } from '../api.js';
 import STLViewer from './STLViewer.jsx';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+
 export default function JobTracker({ jobId, onComplete }) {
   const [status, setStatus] = useState(null);
   const [detail, setDetail] = useState('');
@@ -213,7 +215,7 @@ export default function JobTracker({ jobId, onComplete }) {
 
           <a
             className="btn"
-            href={`http://localhost:3000/download/${jobId}`}
+            href={`${API_BASE}/download/${jobId}`}
             download={`${jobId}.stl`}
             style={{
               width: '100%',
@@ -233,7 +235,7 @@ export default function JobTracker({ jobId, onComplete }) {
             <h4 style={{ marginBottom: 'var(--space-md)', fontSize: '1.125rem' }}>
               3D Preview
             </h4>
-            <STLViewer stlUrl={`http://localhost:3000/download/${jobId}`} />
+            <STLViewer stlUrl={`${API_BASE}/download/${jobId}`} />
           </div>
         </div>
       )}
