@@ -10,6 +10,16 @@ export default function STLViewer({ stlUrl }) {
   const [wireframe, setWireframe] = useState(false);
   const meshRef = useRef(null);
   const rendererRef = useRef(null);
+  const cameraRef = useRef(null);
+
+  const handleResetView = () => {
+    if (cameraRef.current) {
+      cameraRef.current.position.set(0, 0, 220);
+    }
+    if (meshRef.current) {
+      meshRef.current.rotation.set(0, 0, 0);
+    }
+  };
 
   useEffect(() => {
     if (!stlUrl) return;
@@ -29,6 +39,7 @@ export default function STLViewer({ stlUrl }) {
       2000
     );
     camera.position.set(0, 0, 220);
+    cameraRef.current = camera;
 
     // Setup Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -205,6 +216,13 @@ export default function STLViewer({ stlUrl }) {
               title={wireframe ? 'Solid View' : 'Wireframe View'}
             >
               {wireframe ? '🔲' : '⬛'}
+            </button>
+            <button
+              onClick={handleResetView}
+              title="Reset View"
+              style={{ marginLeft: 'var(--space-sm)' }}
+            >
+              🏠
             </button>
           </div>
         )}
